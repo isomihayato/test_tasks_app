@@ -1,0 +1,73 @@
+version: '3'
+services:
+  db:
+    platform: linux/x86_64
+    image: mysql:8.0
+    cap_add:
+      - SYS_NICE
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: tasks_app_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TZ: 'Asia/Tokyo'
+    container_name: db
+    networks:
+      - container-link
+    ports:
+      - '3306:3306'
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes:
+      - db-store:/var/lib/mysql
+      - ./logs:/var/log/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    volumes:
+      - ./api:/myapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - container-link
+    # environment:
+    #   - VIRTUAL_HOST=jewelry-system-api-ogblvijvujl26kx.com,www.jewelry-system-api-ogblvijvujl26kx.com
+    #   - LETSENCRYPT_HOST=jewelry-system-api-ogblvijvujl26kx.com,www.jewelry-system-api-ogblvijvujl26kx.com
+    #   - LETSENCRYPT_EMAIL=jewelrycompany.developer@gmail.com 
+    #   - LETSENCRYPT_TEST=false
+    stdin_open: true
+    tty: true
+  # front:
+  #   build: ./front
+  #   command: yarn start
+  #   ports:
+  #     - '8000:3000'
+  #   volumes:
+  #     - ./front:/myapp
+  #   environment:
+  #     - NODE_OPTIONS=--max_old_space_size=10240
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - container-link
+
+networks:
+  default:
+    external:
+      name: bridge
+  container-link:
+    name: container_network
+
+volumes:
+  proxy:
+  public-data:
+  tmp-data:
+  db-store:
+  gem_data:
+    driver: local
+
